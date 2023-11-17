@@ -20,7 +20,7 @@ class renderingScreen(QDialog):
 
     def __init__(self):
         QtWidgets.QWidget.__init__(self)
-        uic.loadUi(f"UI/videoRendering.ui", self)
+        uic.loadUi("UI/videoRendering.ui", self)
 
         try:
             self.setWindowIcon(QIcon('Logo/tiktoklogo.png'))
@@ -112,8 +112,7 @@ class renderingScreen(QDialog):
 
 
     def testServerFTP(self):
-        success = server.testFTPConnection()
-        if success:
+        if success := server.testFTPConnection():
             self.connectionStatus.setText("Server connection fine!")
         else:
             self.connectionStatus.setText("Could not connect to server! Ensure it is online and FTP username/password are correct in config.ini.")

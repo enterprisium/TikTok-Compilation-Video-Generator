@@ -44,8 +44,7 @@ class LoginWindow(QMainWindow):
     def attemptLogin(self):
         username = self.username.text()
         password = self.password.text()
-        success = client.testFTPConnection(username, password)
-        if success:
+        if success := client.testFTPConnection(username, password):
             self.loginSuccess()
         else:
             self.loginMessage.setText("Incorrect username or password")
@@ -70,7 +69,7 @@ class MainMenu(QMainWindow):
             self.setWindowIcon(QIcon('Assets/tiktoklogo.png'))
         except Exception as e:
             pass
-        self.welcomeMessage.setText("Welcome %s!" % settings.FTP_USER)
+        self.welcomeMessage.setText(f"Welcome {settings.FTP_USER}!")
         self.editVideo.clicked.connect(self.startEditingVideo)
         self.openVideos.clicked.connect(self.openDownloadLocation)
         self.refreshFinishedVideos.clicked.connect(self.getFinishedVideos)
@@ -106,7 +105,7 @@ class MainMenu(QMainWindow):
         names.reverse()
         self.finishedVidSelect.addItems(names)
         self.downloadSingle.setEnabled(True)
-        self.completedVideos.setText("%s Completed Videos" % len(names))
+        self.completedVideos.setText(f"{len(names)} Completed Videos")
 
     def getFinishedVideos(self):
         self.downloadSingle.setEnabled(False)
@@ -189,7 +188,7 @@ class ClipDownloadMenu(QMainWindow):
         self.progressBar.setValue(downloadno)
 
     def finishedDownloading(self, newscriptwrapper):
-        if not len(newscriptwrapper.scriptMap) == 0:
+        if len(newscriptwrapper.scriptMap) != 0:
             self.close()
             if self.clipEditorWindow is None:
                 twitchvideo = scriptwrapper.TwitchVideo(newscriptwrapper)
@@ -351,7 +350,6 @@ class clipEditor(QMainWindow):
     def downloadMoreScripts(self):
         self.gameSelect = ClipDownloadMenu(self)
         self.gameSelect.show()
-        pass
 
     def moveClipDown(self):
         self.videoWrapper.scriptWrapper.moveUp(self.mainCommentIndex)
@@ -371,10 +369,10 @@ class clipEditor(QMainWindow):
         audio = twitchclip.audio
         self.clipTitle.setText(f'{twitchclip.author_name}-{twitchclip.clip_name}')
 
-        self.likeCount.setText("Likes: %s" % twitchclip.diggCount)
-        self.shareCount.setText("Shares: %s" % twitchclip.shareCount)
-        self.playCount.setText("Plays: %s" % twitchclip.playCount)
-        self.commentCount.setText("Comments: %s" % twitchclip.commentCount)
+        self.likeCount.setText(f"Likes: {twitchclip.diggCount}")
+        self.shareCount.setText(f"Shares: {twitchclip.shareCount}")
+        self.playCount.setText(f"Plays: {twitchclip.playCount}")
+        self.commentCount.setText(f"Comments: {twitchclip.commentCount}")
 
         self.updateClipDuration()
         self.mediaPlayer.stop()
@@ -406,7 +404,7 @@ class clipEditor(QMainWindow):
 
 
     def getCurrentWidget(self, x):
-        return self.getTopLevelByName("Vid %s" % str(x))
+        return self.getTopLevelByName(f"Vid {str(x)}")
 
     def incrimentSelection(self):
         if not self.mainCommentIndex + 1 > self.videoWrapper.scriptWrapper.getCommentAmount() - 1:
@@ -414,7 +412,7 @@ class clipEditor(QMainWindow):
 
     def updateColors(self):
         for x, mainComment in enumerate(self.videoWrapper.scriptWrapper.scriptMap):
-            self.selectedMainComment = self.getTopLevelByName("Vid %s" % str(x))
+            self.selectedMainComment = self.getTopLevelByName(f"Vid {str(x)}")
             if mainComment is True:
                 self.selectedMainComment.setForeground(0, QtGui.QBrush(QtGui.QColor("green")))
             else:
@@ -435,15 +433,17 @@ class clipEditor(QMainWindow):
     def nextMainComment(self):
         if not self.mainCommentIndex + 1 > self.videoWrapper.scriptWrapper.getCommentAmount() - 1:
             self.mainCommentIndex += 1
-            self.selectedMainComment = self.getTopLevelByName("Main Comment %s" % str(self.mainCommentIndex))
+            self.selectedMainComment = self.getTopLevelByName(
+                f"Main Comment {self.mainCommentIndex}"
+            )
 
 
     def populateTreeWidget(self):
         self.treeWidget.clear()
         for i, clip in enumerate(self.videoWrapper.scriptWrapper.rawScript):
-            treeParentName = "Vid %s"%str(i)
+            treeParentName = f"Vid {str(i)}"
             self.addTopLevel(treeParentName)
-        self.selectedMainComment = self.getTopLevelByName("Vid %s" % str(0))
+        self.selectedMainComment = self.getTopLevelByName('Vid 0')
         self.updateColors()
 
 
@@ -509,7 +509,7 @@ class clipEditor(QMainWindow):
                 vid = cv2.VideoCapture(fileName)
                 height = vid.get(cv2.CAP_PROP_FRAME_HEIGHT)
                 width = vid.get(cv2.CAP_PROP_FRAME_WIDTH)
-                if width != int(1920) or height != int(1080):
+                if width != 1920 or height != 1080:
                     self.uploadFail("Incorrect resolution for file %s.\n Resolution was %sx%s, required 1920x1080" % (fileName, width, height))
                 else:
                     self.introClipPath = fileName
@@ -594,22 +594,22 @@ class clipEditor(QMainWindow):
 
 
     def saveDefaultIntro(self):
-        with open(f'Save Data/defaultintro.save', 'wb') as pickle_file:
+        with open('Save Data/defaultintro.save', 'wb') as pickle_file:
             pickle.dump(self.introClip, pickle_file)
 
     def saveDefaultInterval(self):
-        with open(f'Save Data/defaultinterval.save', 'wb') as pickle_file:
+        with open('Save Data/defaultinterval.save', 'wb') as pickle_file:
             pickle.dump(self.intervalClipPath, pickle_file)
 
 
     def saveDefaultOutro(self):
-        with open(f'Save Data/defaultoutro.save', 'wb') as pickle_file:
+        with open('Save Data/defaultoutro.save', 'wb') as pickle_file:
             pickle.dump(self.outroClipPath, pickle_file)
 
 
     def loadDefaultIntro(self):
         if os.path.exists("Save Data/defaultintro.save"):
-            with open(f'Save Data/defaultintro.save', 'rb') as pickle_file:
+            with open('Save Data/defaultintro.save', 'rb') as pickle_file:
                 self.introClip = pickle.load(pickle_file)
                 self.introClipPath = self.introClip.mp4
                 self.defaultIntro.setChecked(True)
@@ -617,7 +617,7 @@ class clipEditor(QMainWindow):
 
     def loadDefaultInterval(self):
         if os.path.exists("Save Data/defaultinterval.save"):
-            with open(f'Save Data/defaultinterval.save', 'rb') as pickle_file:
+            with open('Save Data/defaultinterval.save', 'rb') as pickle_file:
                 self.intervalClip = pickle.load(pickle_file)
                 self.intervalClipPath = self.intervalClip
                 self.defaultInterval.setChecked(True)
@@ -626,7 +626,7 @@ class clipEditor(QMainWindow):
 
     def loadDefaultOutro(self):
         if os.path.exists("Save Data/defaultoutro.save"):
-            with open(f'Save Data/defaultoutro.save', 'rb') as pickle_file:
+            with open('Save Data/defaultoutro.save', 'rb') as pickle_file:
                 self.outroClip = pickle.load(pickle_file)
                 self.outroClipPath = self.outroClip
                 self.defaultOutro.setChecked(True)
@@ -635,12 +635,24 @@ class clipEditor(QMainWindow):
 
     #Collecting all of the information for video generator
     def exportVideo(self):
-        intervalCheck = True if (self.intervalClipPath is not None and settings.enforceInterval) or not settings.enforceInterval else False
-        firstClipCheck = True if (self.firstClipPath is not None and settings.enforceFirstClip) or not settings.enforceFirstClip else False
-        introClipCheck = True if (self.introClipPath is not None and settings.enforceIntro) or not settings.enforceIntro else False
-        outroClipCheck = True if (self.outroClipPath is not None and settings.enforceOutro) or not settings.enforceOutro else False
+        intervalCheck = bool(
+            (self.intervalClipPath is not None and settings.enforceInterval)
+            or not settings.enforceInterval
+        )
+        firstClipCheck = bool(
+            (self.firstClipPath is not None and settings.enforceFirstClip)
+            or not settings.enforceFirstClip
+        )
+        introClipCheck = bool(
+            (self.introClipPath is not None and settings.enforceIntro)
+            or not settings.enforceIntro
+        )
+        outroClipCheck = bool(
+            (self.outroClipPath is not None and settings.enforceOutro)
+            or not settings.enforceOutro
+        )
 
-        if intervalCheck is True and firstClipCheck is True and introClipCheck is True and outroClipCheck is True:
+        if intervalCheck and firstClipCheck and introClipCheck and outroClipCheck:
             self.mediaPlayer.stop()
             final_clips = self.videoWrapper.scriptWrapper.getFinalClips()
 
@@ -743,10 +755,22 @@ class clipEditor(QMainWindow):
         if buttonReply == QMessageBox.Yes:
 
 
-            intervalCheck = True if (self.intervalClipPath is not None and settings.enforceInterval) or not settings.enforceInterval else False
-            firstClipCheck = True if (self.firstClipPath is not None and settings.enforceFirstClip) or not settings.enforceFirstClip else False
-            introClipCheck = True if (self.introClipPath is not None and settings.enforceIntro) or not settings.enforceIntro else False
-            outroClipCheck = True if (self.outroClipPath is not None and settings.enforceOutro) or not settings.enforceOutro else False
+            intervalCheck = bool(
+                (self.intervalClipPath is not None and settings.enforceInterval)
+                or not settings.enforceInterval
+            )
+            firstClipCheck = bool(
+                (self.firstClipPath is not None and settings.enforceFirstClip)
+                or not settings.enforceFirstClip
+            )
+            introClipCheck = bool(
+                (self.introClipPath is not None and settings.enforceIntro)
+                or not settings.enforceIntro
+            )
+            outroClipCheck = bool(
+                (self.outroClipPath is not None and settings.enforceOutro)
+                or not settings.enforceOutro
+            )
 
 
             msg = "Could not publish due to the following reasons: \n"
@@ -763,7 +787,13 @@ class clipEditor(QMainWindow):
             if amountClips < 2:
                 msg += "Not enough clips! Need at least two clips to be kept."
 
-            if intervalCheck is False or firstClipCheck is False or introClipCheck is False or outroClipCheck is False or amountClips < 2:
+            if (
+                not intervalCheck
+                or not firstClipCheck
+                or not introClipCheck
+                or not outroClipCheck
+                or amountClips < 2
+            ):
                 self.publishFail(msg)
                 return
 

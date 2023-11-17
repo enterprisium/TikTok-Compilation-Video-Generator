@@ -41,14 +41,12 @@ def createTwitchVideoFromJSON(videojson):
 
         final_clips.append(wrapper)
 
-    video = TikTokVideo(final_clips, name)
-    #print(final_clips)
-    return video
+    return TikTokVideo(final_clips, name)
 
 
 def saveTwitchVideo(folderName, video):
-    print(f'Saved to Temp/%s/vid.data' % folderName)
-    with open(f'Temp/%s/vid.data' % folderName, 'wb') as pickle_file:
+    print(f'Saved to Temp/{folderName}/vid.data')
+    with open(f'Temp/{folderName}/vid.data', 'wb') as pickle_file:
         pickle.dump(video, pickle_file)
 
 
@@ -124,8 +122,8 @@ class ScriptWrapper():
             print("already at top!")
 
     def setupScriptMap(self):
-        for mainComment in self.rawScript:
-            line = False
+        line = False
+        for _ in self.rawScript:
             self.scriptMap.append(line)
 
 
@@ -151,7 +149,7 @@ class ScriptWrapper():
         return len([commentThread for commentThread in self.scriptMap if commentThread[0] is True])
 
     def getEditedCommentAmount(self):
-        commentThreads = ([commentThread for commentThread in self.scriptMap])
+        commentThreads = list(self.scriptMap)
         count = 0
         for commentThread in commentThreads:
             for comment in commentThread:
@@ -160,7 +158,7 @@ class ScriptWrapper():
         return count
 
     def getEditedWordCount(self):
-        commentThreads = ([commentThread for commentThread in self.scriptMap])
+        commentThreads = list(self.scriptMap)
         word_count = 0
         for x, commentThread in enumerate(commentThreads):
             for y, comment in enumerate(commentThread):
@@ -169,7 +167,7 @@ class ScriptWrapper():
         return word_count
 
     def getEditedCharacterCount(self):
-        commentThreads = ([commentThread for commentThread in self.scriptMap])
+        commentThreads = list(self.scriptMap)
         word_count = 0
         for x, commentThread in enumerate(commentThreads):
             for y, comment in enumerate(commentThread):
@@ -183,17 +181,18 @@ class ScriptWrapper():
 
 
     def getKeptClips(self):
-        final_script = []
-        for i, clip in enumerate(self.scriptMap):
-            if clip:
-                final_script.append(self.rawScript[i])
-        return final_script
+        return [self.rawScript[i] for i, clip in enumerate(self.scriptMap) if clip]
 
     def getEstimatedVideoTime(self):
-        time = 0
-        for i, comment in enumerate(self.scriptMap):
-            if comment is True:
-                time += round(self.rawScript[i].vid_duration - (self.rawScript[i].start_cut / 1000) - (self.rawScript[i].end_cut / 1000), 1)
-        obj = datetime.timedelta(seconds=math.ceil(time))
-        return  obj
+        time = sum(
+            round(
+                self.rawScript[i].vid_duration
+                - (self.rawScript[i].start_cut / 1000)
+                - (self.rawScript[i].end_cut / 1000),
+                1,
+            )
+            for i, comment in enumerate(self.scriptMap)
+            if comment is True
+        )
+        return datetime.timedelta(seconds=math.ceil(time))
 

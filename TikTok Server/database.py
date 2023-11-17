@@ -64,9 +64,7 @@ def getFoundClips(filter, limit):
 
     cursor.execute(query, args)
     result = cursor.fetchall()
-    results = []
-    for res in result:
-        results.append(pickle.loads(res[4]))
+    results = [pickle.loads(res[4]) for res in result]
     connection_object.commit()
     cursor.close()
     connection_object.close()
@@ -78,7 +76,7 @@ def addFilter(filter_name, filterobject):
     connection_object = connection_pool.get_connection()
     cursor = connection_object.cursor()
     cursor.execute("USE tiktokdb;")
-    query = f"INSERT INTO filters(`name`, `filterwrapper`) VALUES(%s, %s);"
+    query = "INSERT INTO filters(`name`, `filterwrapper`) VALUES(%s, %s);"
     filterobjectdumped = pickle.dumps(filterobject)
     args = (filter_name, filterobjectdumped)
     cursor.execute(query, args)
@@ -93,9 +91,7 @@ def getAllSavedFilters():
     query = "SELECT name, filterwrapper FROM filters;"
     cursor.execute(query)
     result = cursor.fetchall()
-    results = []
-    for res in result:
-        results.append([res[0], pickle.loads(res[1])])
+    results = [[res[0], pickle.loads(res[1])] for res in result]
     cursor.close()
     connection_object.close()
     return results
@@ -120,9 +116,7 @@ def getFilterNames():
     query = "SELECT name FROM filters;"
     cursor.execute(query)
     result = cursor.fetchall()
-    results = []
-    for res in result:
-        results.append(res[0])
+    results = [res[0] for res in result]
     cursor.close()
     connection_object.close()
     return results
@@ -135,9 +129,7 @@ def getFilterClipCount(filter):
     args = (filter,)
     cursor.execute(query, args)
     result = cursor.fetchall()
-    results = []
-    for res in result:
-        results.append(res)
+    results = list(result)
     cursor.close()
     connection_object.close()
     return results
@@ -150,9 +142,7 @@ def getFilterClipCountByStatus(filter,status):
     args = (filter,status)
     cursor.execute(query, args)
     result = cursor.fetchall()
-    results = []
-    for res in result:
-        results.append(res)
+    results = list(result)
     cursor.close()
     connection_object.close()
     return results
@@ -165,9 +155,7 @@ def getFilterClipsByStatusLimit(filterName, status, limit):
     args = (filterName,status, limit)
     cursor.execute(query, args)
     result = cursor.fetchall()
-    results = []
-    for res in result:
-        results.append(pickle.loads(res[4]))
+    results = [pickle.loads(res[4]) for res in result]
     cursor.close()
     connection_object.close()
     return results
@@ -185,9 +173,7 @@ def geClipsByStatusWithoutIds(filterName, status, limit, idlist):
 
     cursor.execute(query, tuple(idlist))
     result = cursor.fetchall()
-    results = []
-    for res in result:
-        results.append(pickle.loads(res[4]))
+    results = [pickle.loads(res[4]) for res in result]
     cursor.close()
     connection_object.close()
     return results
@@ -201,9 +187,7 @@ def getClipById(id):
     args = (id, )
     cursor.execute(query, args)
     result = cursor.fetchall()
-    results = []
-    for res in result:
-        results.append(pickle.loads(res[0]))
+    results = [pickle.loads(res[0]) for res in result]
     cursor.close()
     connection_object.close()
     return results[0]
@@ -216,9 +200,7 @@ def getClipsByStatus(status):
     args = (status, )
     cursor.execute(query, args)
     result = cursor.fetchall()
-    results = []
-    for res in result:
-        results.append(pickle.loads(res[0]))
+    results = [pickle.loads(res[0]) for res in result]
     cursor.close()
     connection_object.close()
     return results
@@ -231,9 +213,7 @@ def getFilterClipsByStatus(filterName, status):
     args = (status, filterName)
     cursor.execute(query, args)
     result = cursor.fetchall()
-    results = []
-    for res in result:
-        results.append(pickle.loads(res[0]))
+    results = [pickle.loads(res[0]) for res in result]
     cursor.close()
     connection_object.close()
     return results
@@ -246,9 +226,7 @@ def getAllSavedClipIDs():
     query = "SELECT clip_id FROM clip_bin;"
     cursor.execute(query)
     result = cursor.fetchall()
-    results = []
-    for res in result:
-        results.append(res)
+    results = list(result)
     cursor.close()
     connection_object.close()
     return results

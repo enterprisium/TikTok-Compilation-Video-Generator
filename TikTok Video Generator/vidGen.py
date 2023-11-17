@@ -28,8 +28,7 @@ render_message = None
 
 #Getting Filename without extension and storing it into a list
 def getFileNames(file_path):
-    files = [os.path.splitext(filename)[0] for filename in os.listdir(file_path)]
-    return files
+    return [os.path.splitext(filename)[0] for filename in os.listdir(file_path)]
 
 def deleteSkippedClips(clips):
     for clip in clips:
@@ -71,21 +70,20 @@ def renderThread(renderingScreen):
             t1 = datetime.datetime.now()
 
             total = t1-t0
-            print("Rendering Time %s" % total)
+            print(f"Rendering Time {total}")
 
             if settings.backupVideos:
                 backupName = save_names[i].replace(settings.temp_path, settings.backup_path)
                 if os.path.exists(backupName):
-                    print("Backup for video %s already exists" % backupName)
+                    print(f"Backup for video {backupName} already exists")
                 else:
-                    print("Making backup of video to %s" % backupName)
+                    print(f"Making backup of video to {backupName}")
                     copy_tree(save_names[i], backupName)
 
 
             print(f"Deleting video folder {save_names[i]}")
             shutil.rmtree(save_names[i])
             renderingScreen.update_backups.emit()
-                # delete all the temp videos
             try:
                 deleteAllFilesInPath(settings.vid_finishedvids)
             except Exception as e:
@@ -107,25 +105,19 @@ def renderVideo(video, rendering_screen):
     streamers_in_cred = []
 
     render_current_progress = 0
-    # see where render_current_progress += 1
-
-    amount = 0
-    for clip in clips:
-        if clip.isUsed:
-            amount += 1
-
+    amount = sum(1 for clip in clips if clip.isUsed)
     render_max_progress = amount * 2 + 1 + 1
     render_message = "Beginning Rendering"
     rendering_screen.render_progress.emit()
 
-    current_date = datetime.datetime.today().strftime("%m-%d-%Y__%H-%M-%S")
+    current_date = datetime.datetime.now().strftime("%m-%d-%Y__%H-%M-%S")
 
     toCombine = []
 
 
     fpsList = []
 
-    for i, clip in enumerate(clips):
+    for clip in clips:
         mp4 = clip.mp4
         mp4name = mp4
         mp4path = f"{mp4}.mp4"
@@ -145,7 +137,7 @@ def renderVideo(video, rendering_screen):
     if settings.useMaximumFps:
         chosenFps = int(max(fpsList))
 
-    print("Using Fps %s" % chosenFps)
+    print(f"Using Fps {chosenFps}")
 
     # render progress 1
     for i, clip in enumerate(clips):
@@ -218,15 +210,10 @@ def renderVideo(video, rendering_screen):
 
     sleep(5)
 
-    vid_concat = open("concat.txt", "a")
-    #Adding comment thread video clips and interval video file paths to text file for concatenating
-    for files in toCombine:
-        vid_concat.write(f"file {files}\n")
-    vid_concat.close()
-
-
-
-
+    with open("concat.txt", "a") as vid_concat:
+        #Adding comment thread video clips and interval video file paths to text file for concatenating
+        for files in toCombine:
+            vid_concat.write(f"file {files}\n")
     os.system(f"ffmpeg -safe 0 -f concat -segment_time_metadata 1 -i concat.txt -vf select=concatdec_select -af aselect=concatdec_select,aresample=async=1 \"{settings.final_video_path}/{videoName}_{current_date}.mp4\"")
     #os.system(f"ffmpeg -f concat -safe 0 -i concat.txt -s 1920x1080 -c copy {settings.final_video_path}/TikTokMoments_{current_date}.mp4")
 
@@ -237,13 +224,12 @@ def renderVideo(video, rendering_screen):
     render_current_progress += 1
     t1 = datetime.datetime.now()
     total = t1-t0
-    render_message = "Done writing final video (%s)" % total
+    render_message = f"Done writing final video ({total})"
     rendering_screen.render_progress.emit()
 
-    f= open(f"{settings.final_video_path}/{videoName}_{current_date}.txt","w+")
-    f.write("A special thanks to the following: \n\n")
-    for cred in credits:
-        f.write(cred + "\n")
-    f.close()
+    with open(f"{settings.final_video_path}/{videoName}_{current_date}.txt","w+") as f:
+        f.write("A special thanks to the following: \n\n")
+        for cred in credits:
+            f.write(cred + "\n")
     sleep(10)
 

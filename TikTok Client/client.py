@@ -6,7 +6,7 @@ import clientUI
 import traceback, sys
 
 settings.generateConfigFile()
-httpaddress = "%s:%s" % (settings.address, settings.HTTP_PORT)
+httpaddress = f"{settings.address}:{settings.HTTP_PORT}"
 max_progress = None
 current_progress = None
 render_message = None
@@ -47,9 +47,9 @@ def requestClips(game, amount, window):
     for i, clip in enumerate(clipwrappers):
         try:
             mp4 = clip.mp4
-            print("Downloading %s/%s clips %s" % (i + 1, len(clipwrappers), mp4))
-            with open("TempClips/%s.mp4"%mp4, 'wb' ) as file:
-                ftp.retrbinary('RETR %s.mp4' % mp4, file.write)
+            print(f"Downloading {i + 1}/{len(clipwrappers)} clips {mp4}")
+            with open(f"TempClips/{mp4}.mp4", 'wb') as file:
+                ftp.retrbinary(f'RETR {mp4}.mp4', file.write)
             window.update_progress_bar.emit(i + 1)
         except Exception as e:
             bad_indexes.append(i)
@@ -74,10 +74,7 @@ def testFTPConnection(username, password):
 
 
 def requestClipsWithoutClips(game, amount, clips, window):
-    ids = []
-    for clip in clips:
-        ids.append(str(clip.id))
-
+    ids = [str(clip.id) for clip in clips]
     r = requests.get(f'http://{httpaddress}/getclipswithoutids', json={"game": game, "amount" : int(amount), "ids" : ids},  headers={'Accept-Encoding': None})
     clips = r.json()["clips"]
     clipwrappers = []
@@ -104,9 +101,9 @@ def requestClipsWithoutClips(game, amount, clips, window):
     for i, clip in enumerate(clipwrappers):
         try:
             mp4 = clip.mp4
-            print("Downloading %s/%s clips %s" % (i + 1, len(clipwrappers), mp4))
-            with open("TempClips/%s.mp4"%mp4, 'wb' ) as file :
-                ftp.retrbinary('RETR %s.mp4' % mp4, file.write, blocksize=settings.block_size)
+            print(f"Downloading {i + 1}/{len(clipwrappers)} clips {mp4}")
+            with open(f"TempClips/{mp4}.mp4", 'wb') as file:
+                ftp.retrbinary(f'RETR {mp4}.mp4', file.write, blocksize=settings.block_size)
             window.update_progress_bar.emit(i + 1)
         except Exception as e:
             bad_indexes.append(i)
@@ -123,10 +120,9 @@ def uploadFile(location, ftplocation, name):
     ftp = ftplib.FTP()
     ftp.connect(settings.address, settings.FTP_PORT)
     ftp.login(settings.FTP_USER, settings.FTP_PASSWORD)
-    ftp.cwd('%s' % ftplocation)
-    file = open(location,'rb')
-    ftp.storbinary('STOR %s' % name, file, blocksize=262144)
-    file.close()
+    ftp.cwd(f'{ftplocation}')
+    with open(location,'rb') as file:
+        ftp.storbinary(f'STOR {name}', file, blocksize=262144)
 
 def VideoGeneratorRenderStatus():
     global max_progress, current_progress, render_message, music_categories
@@ -150,11 +146,7 @@ def exportVideo(videowrapper, name, window):
     introUpload = None
     vidClipUpload = None
 
-    amount = 0
-    for clip in clips:
-        if clip.upload:
-            amount += 1
-
+    amount = sum(1 for clip in clips if clip.upload)
     window.set_max_progres_bar.emit(amount)
 
     for clip in clips:
@@ -162,18 +154,26 @@ def exportVideo(videowrapper, name, window):
             introUpload = clip.mp4
             name = len(clip.mp4.split("/"))
             new_name = (clip.mp4.split("/")[name-1]).replace(".mp4", "")
-            clip.mp4 = "UploadedFiles/%s.mp4" % new_name
-            uploadFile(introUpload, "/UploadedFiles/", "%s.mp4" % new_name)
+            clip.mp4 = f"UploadedFiles/{new_name}.mp4"
+            uploadFile(introUpload, "/UploadedFiles/", f"{new_name}.mp4")
             window.update_progress_bar.emit()
             continue
 
 
-    clipInfo = []
-
-    for clip in clips:
-        clipInfo.append({"id" : clip.id,
-                         "isIntro" : clip.isIntro, "isUpload" : clip.upload, "mp4" : clip.mp4, "duration" : clip.vid_duration, "audio" : clip.audio, "keep" : clip.isUsed, "isInterval" : clip.isInterval, "isOutro" : clip.isOutro})
-
+    clipInfo = [
+        {
+            "id": clip.id,
+            "isIntro": clip.isIntro,
+            "isUpload": clip.upload,
+            "mp4": clip.mp4,
+            "duration": clip.vid_duration,
+            "audio": clip.audio,
+            "keep": clip.isUsed,
+            "isInterval": clip.isInterval,
+            "isOutro": clip.isOutro,
+        }
+        for clip in clips
+    ]
     window.update_progress_bar.emit()
 
     info = {"clips": clipInfo, "name" : name}
@@ -194,13 +194,13 @@ def downloadFinishedVideo(name, window):
     ftp.login(settings.FTP_USER, settings.FTP_PASSWORD)
     ftp.cwd('/FinalVideos/')
 
-    print("Downloading Video %s " % name)
-    with open("Finished Videos/%s.mp4"%name, 'wb' ) as file :
-        print('%s.mp4' % name)
-        ftp.retrbinary('RETR %s.mp4' % name, file.write, blocksize=settings.block_size)
+    print(f"Downloading Video {name} ")
+    with open(f"Finished Videos/{name}.mp4", 'wb') as file:
+        print(f'{name}.mp4')
+        ftp.retrbinary(f'RETR {name}.mp4', file.write, blocksize=settings.block_size)
     window.update_progress_bar.emit(1)
-    with open("Finished Videos/%s.txt"%name, 'wb' ) as file :
-        ftp.retrbinary('RETR %s.txt' % name, file.write, blocksize=settings.block_size)
+    with open(f"Finished Videos/{name}.txt", 'wb') as file:
+        ftp.retrbinary(f'RETR {name}.txt', file.write, blocksize=settings.block_size)
     window.update_progress_bar.emit(2)
     window.finish_downloading.emit()
 

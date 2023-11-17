@@ -31,7 +31,7 @@ class AutoDownloader():
         if self.clipIndex == 0:
             self.window.start_clip_search.emit()
 
-        if not self.clipIndex == len(self.autoDownloadQueue):
+        if self.clipIndex != len(self.autoDownloadQueue):
             # Thread(target=tiktok.getAllClips, args=(self.autoDownloadQueue[self.clipIndex], int(self.window.bulkFindAmount.text()), self.window)).start()
             amount = len(tiktok.getAllClips(self.autoDownloadQueue[self.clipIndex], int(self.window.bulkFindAmount.text()), self.window))
             self.clipIndex += 1
@@ -45,7 +45,7 @@ class AutoDownloader():
     def downloadClips(self):
         if self.clipIndex == 0:
             self.window.start_download_search.emit()
-        if not self.clipIndex == len(self.autoDownloadQueue):
+        if self.clipIndex != len(self.autoDownloadQueue):
             filter = self.autoDownloadQueue[self.clipIndex]
             clips = database.getFoundClips(filter[0], int(self.window.bulkDownloadAmount.text()))
             # Thread(target=tiktok.autoDownloadClips, args=(filter[0], clips, self.window)).start()
