@@ -50,9 +50,9 @@ class FilterCreationWindow(QMainWindow):
 
 
     def changeCategory(self):
-        isTrending = True if self.category.currentText() == "Trending" else False
-        isHashTag = True if self.category.currentText() == "Hashtag" else False
-        isAuthor = True if self.category.currentText() == "Author" else False
+        isTrending = self.category.currentText() == "Trending"
+        isHashTag = self.category.currentText() == "Hashtag"
+        isAuthor = self.category.currentText() == "Author"
 
 
         self.inputText.show()
@@ -70,10 +70,10 @@ class FilterCreationWindow(QMainWindow):
 
     def updateDisplay(self):
 
-        useLikeFilter = True if self.likeFilter.isChecked() else False
-        useShareFilter = True if self.shareFilter.isChecked() else False
-        useAmountFilter = True if self.amountFilter.isChecked() else False
-        useCommentFilter = True if self.commentFilter.isChecked() else False
+        useLikeFilter = bool(self.likeFilter.isChecked())
+        useShareFilter = bool(self.shareFilter.isChecked())
+        useAmountFilter = bool(self.amountFilter.isChecked())
+        useCommentFilter = bool(self.commentFilter.isChecked())
 
         self.likeAmount.setEnabled(useLikeFilter)
         self.shareAmount.setEnabled(useShareFilter)
@@ -82,14 +82,14 @@ class FilterCreationWindow(QMainWindow):
 
     def attemptCreateFilter(self):
 
-        useLikeFilter = True if self.likeFilter.isChecked() else False
-        useShareFilter = True if self.shareFilter.isChecked() else False
-        useAmountFilter = True if self.amountFilter.isChecked() else False
-        useCommentFilter = True if self.commentFilter.isChecked() else False
+        useLikeFilter = bool(self.likeFilter.isChecked())
+        useShareFilter = bool(self.shareFilter.isChecked())
+        useAmountFilter = bool(self.amountFilter.isChecked())
+        useCommentFilter = bool(self.commentFilter.isChecked())
 
-        isTrending = True if self.category.currentText() == "Trending" else False
-        isHashTag = True if self.category.currentText() == "Hashtag" else False
-        isAuthor = True if self.category.currentText() == "Author" else False
+        isTrending = self.category.currentText() == "Trending"
+        isHashTag = self.category.currentText() == "Hashtag"
+        isAuthor = self.category.currentText() == "Author"
 
         filterType = self.category.currentText()
         inputText = None
@@ -114,7 +114,12 @@ class FilterCreationWindow(QMainWindow):
 
         if isHashTag or isAuthor:
             if self.inputText.text() == "" or self.inputText.text().replace(" ", "") == "":
-                QMessageBox.information(self, '%s type specified but no input text!' % filterType, "Enter a value into the input box! Add commas if you want multiple!", QMessageBox.Ok)
+                QMessageBox.information(
+                    self,
+                    f'{filterType} type specified but no input text!',
+                    "Enter a value into the input box! Add commas if you want multiple!",
+                    QMessageBox.Ok,
+                )
                 return
             else:
                 inputText = self.inputText.text().replace(" ", "")
@@ -127,7 +132,12 @@ class FilterCreationWindow(QMainWindow):
             return
 
         if filterName in self.savedFilters:
-            QMessageBox.information(self, 'Filter already exists with name!', "Please use a different name for this filter! This name (%s) is already registered." % filterName, QMessageBox.Ok)
+            QMessageBox.information(
+                self,
+                'Filter already exists with name!',
+                f"Please use a different name for this filter! This name ({filterName}) is already registered.",
+                QMessageBox.Ok,
+            )
             return
 
         filter = Filter(filterType, inputText, likeAmount, shareAmount, playAmount, commentAmount)

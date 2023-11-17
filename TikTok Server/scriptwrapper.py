@@ -30,15 +30,14 @@ def reformatPartialJson(videojson):
 
 
         if not used:
-            mp4path = "%s/%s.mp4" % (settings.vid_filepath, uploadMp4)
-            print("Clip %s is not used, deleting" % mp4path)
+            mp4path = f"{settings.vid_filepath}/{uploadMp4}.mp4"
+            print(f"Clip {mp4path} is not used, deleting")
             os.remove(mp4path)
 
         if not isUpload:
             oldwrapper = database.getClipById(id)
             database.updateStatus(id, "USED")
             clip["author_name"] = oldwrapper.author_name
-            final_clips.append(clip)
         else:
             streamer_name = ""
             title = ""
@@ -58,7 +57,7 @@ def reformatPartialJson(videojson):
                 outroClip = clip
                 continue
 
-            final_clips.append(clip)
+        final_clips.append(clip)
         if isInterval:
             clip["author_name"] = ""
             intervalClip = clip
@@ -88,10 +87,7 @@ def createTwitchVideoFromJSON(videojson):
         used = clip["keep"]
 
         isUpload = clip["isUpload"]
-        isIntro = clip["isIntro"]
         uploadMp4 = clip["mp4"]
-        uploadDuration = clip["duration"]
-
         if not isUpload:
             oldwrapper = database.getClipById(id)
             oldwrapper.audio = audio
@@ -106,6 +102,7 @@ def createTwitchVideoFromJSON(videojson):
             title = "na"
             channel_url = "na"
 
+            isIntro = clip["isIntro"]
             if not isIntro:
                 name = len(uploadMp4.split("/"))
                 new_name = (uploadMp4.split("/")[name-1]).replace(".mp4", "")
@@ -115,6 +112,8 @@ def createTwitchVideoFromJSON(videojson):
 
             wrapper = ClipWrapper(id, url, streamer_name, title, channel_url)
             wrapper.mp4 = uploadMp4
+            uploadDuration = clip["duration"]
+
             wrapper.vid_duration = uploadDuration
             wrapper.isIntro = isIntro
             wrapper.audio = audio
@@ -122,8 +121,7 @@ def createTwitchVideoFromJSON(videojson):
 
             final_clips.append(wrapper)
 
-    video = TikTokVideo(final_clips)
-    return video
+    return TikTokVideo(final_clips)
 
 
 def saveTwitchVideo(video):
@@ -147,7 +145,7 @@ class ClipWrapper():
         self.author_name = author_name
         self.audio = 1
         self.isUsed = False
-        self.mp4 = "%s-%s" % (author_name, id)
+        self.mp4 = f"{author_name}-{id}"
         self.isIntro = False
         self.vid_duration = None
         self.createTime = createTime
@@ -208,8 +206,8 @@ class ScriptWrapper():
             print("already at top!")
 
     def setupScriptMap(self):
-        for mainComment in self.rawScript:
-            line = False
+        line = False
+        for _ in self.rawScript:
             self.scriptMap.append(line)
 
 
@@ -235,7 +233,7 @@ class ScriptWrapper():
         return len([commentThread for commentThread in self.scriptMap if commentThread[0] is True])
 
     def getEditedCommentAmount(self):
-        commentThreads = ([commentThread for commentThread in self.scriptMap])
+        commentThreads = list(self.scriptMap)
         count = 0
         for commentThread in commentThreads:
             for comment in commentThread:
@@ -244,7 +242,7 @@ class ScriptWrapper():
         return count
 
     def getEditedWordCount(self):
-        commentThreads = ([commentThread for commentThread in self.scriptMap])
+        commentThreads = list(self.scriptMap)
         word_count = 0
         for x, commentThread in enumerate(commentThreads):
             for y, comment in enumerate(commentThread):
@@ -253,7 +251,7 @@ class ScriptWrapper():
         return word_count
 
     def getEditedCharacterCount(self):
-        commentThreads = ([commentThread for commentThread in self.scriptMap])
+        commentThreads = list(self.scriptMap)
         word_count = 0
         for x, commentThread in enumerate(commentThreads):
             for y, comment in enumerate(commentThread):
@@ -267,10 +265,6 @@ class ScriptWrapper():
 
 
     def getKeptClips(self):
-        final_script = []
-        for i, clip in enumerate(self.scriptMap):
-            if clip:
-                final_script.append(self.rawScript[i])
-        return final_script
+        return [self.rawScript[i] for i, clip in enumerate(self.scriptMap) if clip]
 
 

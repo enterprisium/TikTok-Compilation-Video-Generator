@@ -44,15 +44,17 @@ config = configparser.ConfigParser()
 
 configpath = None
 
-if platform == "linux" or platform == "linux2" or platform == "darwin":
-    configpath = "%s/config.ini" % currentPath
+if platform in ["linux", "linux2", "darwin"]:
+    configpath = f"{currentPath}/config.ini"
 else:
     configpath = "%s\\config.ini" % currentPath
 
 
 def generateConfigFile():
     if not os.path.isfile(configpath):
-        print("Could not find config file in location %s, creating a new one" % configpath)
+        print(
+            f"Could not find config file in location {configpath}, creating a new one"
+        )
         config.add_section("video_generator_details")
         config.set("video_generator_details", 'address', '127.0.0.1')
         config.set("video_generator_details", 'http_port', '8001')
@@ -74,7 +76,7 @@ def generateConfigFile():
         with open(configpath, 'w') as configfile:
             config.write(configfile)
     else:
-        print("Found config in location %s" % configpath)
+        print(f"Found config in location {configpath}")
         loadValues()
 
 def loadValues():

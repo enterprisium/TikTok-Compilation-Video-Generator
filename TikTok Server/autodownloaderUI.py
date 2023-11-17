@@ -26,7 +26,7 @@ current_path = os.path.dirname(os.path.realpath(__file__))
 def cleanDatabase():
     clips = database.getClipsByStatus("DOWNLOADED")
 
-    print("Checking %s clips for MP4s" % len(clips))
+    print(f"Checking {len(clips)} clips for MP4s")
 
     for i, clip in enumerate(clips):
         filePath = f"{settings.vid_filepath}/%s.mp4" % clip.mp4
@@ -38,17 +38,19 @@ def cleanDatabase():
 def deleteClipsForFilter(filter):
     clips = database.getFilterClipsByStatus(filter, "DOWNLOADED")
 
-    print("Attemping to delete all clips for %s (%s downloaded found)" % (filter, len(clips)))
+    print(
+        f"Attemping to delete all clips for {filter} ({len(clips)} downloaded found)"
+    )
     for i, clip in enumerate(clips):
         filePath = f"{settings.vid_filepath}/%s.mp4" % clip.mp4
         print(f"Checking if clip ({i + 1}/{len(clips)}) exists")
         if not os.path.exists(f"{settings.vid_filepath}/%s.mp4" % clip.mp4):
             print(f"Clip does not exist {filePath}")
-            database.updateStatus(clip.id, "FOUND")
         else:
             os.remove(f"{settings.vid_filepath}/%s.mp4" % clip.mp4)
             print(f"Clip exists, deleting it {filePath}")
-            database.updateStatus(clip.id, "FOUND")
+
+        database.updateStatus(clip.id, "FOUND")
 
 
 
@@ -136,7 +138,7 @@ class PassiveDownloaderWindow(QMainWindow):
         elif username in [i[0] for i in server.usersList]:
             self.userAddStatus.setText("Account already exists with this name!")
         else:
-            self.userAddStatus.setText("Successfully added new user %s" % username)
+            self.userAddStatus.setText(f"Successfully added new user {username}")
             server.usersList.append((username, password))
             self.updateAccountInfo()
             server.saveUsersTable()
@@ -146,9 +148,9 @@ class PassiveDownloaderWindow(QMainWindow):
         index = [i for i in range(len(server.usersList)) if server.usersList[i][0] == toRemove]
         if toRemove:
             del server.usersList[index[0]]
-            print("Successfully deleted user %s" % toRemove)
+            print(f"Successfully deleted user {toRemove}")
         else:
-            print("Couldn't delete user %s" % toRemove)
+            print(f"Couldn't delete user {toRemove}")
         self.updateAccountInfo()
         server.saveUsersTable()
 
@@ -160,16 +162,16 @@ class PassiveDownloaderWindow(QMainWindow):
             username = user[0]
             password = user[1]
 
-            self.accountInfo.append("User %s, password %s" % (username, password))
+            self.accountInfo.append(f"User {username}, password {password}")
         self.populateRemoveUserList()
 
     def populateRemoveUserList(self):
         self.userToRemove.clear()
-        users = []
-        for user in server.usersList:
-            if user[0] == settings.videoGeneratorFTPUser:
-                continue
-            users.append(user[0])
+        users = [
+            user[0]
+            for user in server.usersList
+            if user[0] != settings.videoGeneratorFTPUser
+        ]
         self.userToRemove.addItems(users)
 
 
@@ -189,10 +191,8 @@ class PassiveDownloaderWindow(QMainWindow):
     def populateComboBox(self):
         self.filterSelect.clear()
         self.gameSelectToDelete.clear()
-        filters = []
         saved_filters = database.getFilterNames()
-        for filter in saved_filters:
-            filters.append(filter)
+        filters = list(saved_filters)
         self.filterSelect.addItems(filters)
         self.gameSelectToDelete.addItems(filters)
 
@@ -207,7 +207,6 @@ class PassiveDownloaderWindow(QMainWindow):
         self.stopAuto.setEnabled(False)
 
         self.autoWrapper.findClips()
-        pass
 
     def stopFindingProcess(self):
         self.startFinding.setEnabled(True)
@@ -217,7 +216,6 @@ class PassiveDownloaderWindow(QMainWindow):
         self.startAuto.setEnabled(False)
         self.stopAuto.setEnabled(False)
         self.autoWrapper.stop()
-        pass
 
     def startDownloadingProcess(self):
         self.refreshFilterClips.setEnabled(False)
@@ -231,7 +229,6 @@ class PassiveDownloaderWindow(QMainWindow):
         self.stopDownloading.setEnabled(True)
 
         self.autoWrapper.downloadClips()
-        pass
 
     def stopDownloadingProcess(self):
         self.refreshFilterClips.setEnabled(True)
@@ -246,7 +243,6 @@ class PassiveDownloaderWindow(QMainWindow):
         self.stopDownloading.setEnabled(False)
 
         self.autoWrapper.stop()
-        pass
 
 
     def startAutoProcess(self):
@@ -262,7 +258,6 @@ class PassiveDownloaderWindow(QMainWindow):
 
         self.autoWrapper.auto = True
         self.autoWrapper.startAutoMode()
-        pass
 
     def stopAutoProcess(self):
         self.autoWrapper.auto = False
@@ -304,17 +299,23 @@ class PassiveDownloaderWindow(QMainWindow):
 
 
     def logStartClipSearchInfo(self): # called in autodownloader
-        self.downloadLog.append("Starting Clip Search for %s filters" % len(self.autoDownloadQueue))
+        self.downloadLog.append(
+            f"Starting Clip Search for {len(self.autoDownloadQueue)} filters"
+        )
 
     def logAddClipFoundInfo(self, game_name, amount, period): # called in twitch
-        self.downloadLog.append("Found %s for filter %s for period %s" % (amount, game_name, period))
+        self.downloadLog.append(
+            f"Found {amount} for filter {game_name} for period {period}"
+        )
 
     def logAddTotalClipFoundInfo(self, game_name, amount): # called in twitch
-        self.downloadLog.append("Found %s for filter %s" % (amount, game_name))
+        self.downloadLog.append(f"Found {amount} for filter {game_name}")
         self.autoWrapper.findClips()
 
     def logCompletedClipSearchInfo(self): # called in autodownloader
-        self.downloadLog.append("Completed clip search for %s filters" % len(self.autoDownloadQueue))
+        self.downloadLog.append(
+            f"Completed clip search for {len(self.autoDownloadQueue)} filters"
+        )
         self.logGetAmountClips()
         self.refreshFilterClips.setEnabled(True)
         self.addFilter.setEnabled(True)
@@ -335,25 +336,33 @@ class PassiveDownloaderWindow(QMainWindow):
             amount_downloaded = database.getFilterClipCountByStatus(filter, "DOWNLOADED")[0][0]
             amount_used = database.getFilterClipCountByStatus(filter, "USED")[0][0]
             total_downloaded += amount_downloaded
-            self.clipBinInformation.append("Filter: %s amount clips %s (downloaded %s | used %s)" % (filter, amount, amount_downloaded, amount_used))
-        self.clipBinInformation.append("Total Downloaded: %s" % total_downloaded)
+            self.clipBinInformation.append(
+                f"Filter: {filter} amount clips {amount} (downloaded {amount_downloaded} | used {amount_used})"
+            )
+        self.clipBinInformation.append(f"Total Downloaded: {total_downloaded}")
 
     def logStartDownloadInfo(self): # called in autodownloader
-        self.downloadLog.append("Starting downloads for %s filters" % len(self.autoDownloadQueue))
+        self.downloadLog.append(
+            f"Starting downloads for {len(self.autoDownloadQueue)} filters"
+        )
 
     def logStartDownloadFilterInfo(self, filter, amount): # called tiktok
         self.progressBar.setValue(0)
         self.progressBar.setMaximum(amount)
-        self.downloadLog.append("Downloading %s clips for filter %s" % (amount, filter))
-        self.currentDownloadFilter.setText("Current Filter: %s" % filter)
-        self.amountCurrentPass.setText("Amount in current pass: %s" % amount)
+        self.downloadLog.append(f"Downloading {amount} clips for filter {filter}")
+        self.currentDownloadFilter.setText(f"Current Filter: {filter}")
+        self.amountCurrentPass.setText(f"Amount in current pass: {amount}")
 
     def logDoneDownloadingFilterInfo(self, filter, amount): # called in tiktok
-        self.downloadLog.append("Finished downloading %s clips for filter %s" % (amount, filter))
+        self.downloadLog.append(
+            f"Finished downloading {amount} clips for filter {filter}"
+        )
         self.autoWrapper.downloadClips()
 
     def logCompletedDownloadInfo(self): # called in autodownloader
-        self.downloadLog.append("Completed downloading %s clips" % len(self.autoDownloadQueue))
+        self.downloadLog.append(
+            f"Completed downloading {len(self.autoDownloadQueue)} clips"
+        )
         self.logGetAmountClips()
         self.refreshFilterClips.setEnabled(True)
         self.addFilter.setEnabled(True)
@@ -365,6 +374,6 @@ class PassiveDownloaderWindow(QMainWindow):
 
     def updateProgressBar(self, number): # called in twitch
         self.progressBar.setValue(number)
-        self.downloadProgressAmount.setText("Download progress: %s" % number)
+        self.downloadProgressAmount.setText(f"Download progress: {number}")
 
 

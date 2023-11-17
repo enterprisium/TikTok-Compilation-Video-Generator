@@ -21,8 +21,8 @@ config = configparser.ConfigParser()
 
 configpath = None
 
-if platform == "linux" or platform == "linux2" or platform == "darwin":
-    configpath = "%s/config.ini" % currentPath
+if platform in ["linux", "linux2", "darwin"]:
+    configpath = f"{currentPath}/config.ini"
 else:
     configpath = "%s\\config.ini" % currentPath
 
@@ -33,7 +33,9 @@ enforceFirstClip = True
 
 def generateConfigFile():
     if not os.path.isfile(configpath):
-        print("Could not find config file in location %s, creating a new one" % configpath)
+        print(
+            f"Could not find config file in location {configpath}, creating a new one"
+        )
         config.add_section("server_location")
         config.set("server_location", 'address', '127.0.0.1')
         config.set("server_location", 'server_http_port', '8000')
@@ -52,7 +54,7 @@ def generateConfigFile():
         with open(configpath, 'w') as configfile:
             config.write(configfile)
     else:
-        print("Found config in location %s" % configpath)
+        print(f"Found config in location {configpath}")
         loadValues()
 
 def loadValues():

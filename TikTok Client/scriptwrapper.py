@@ -78,8 +78,8 @@ class ScriptWrapper():
             print("already at top!")
 
     def setupScriptMap(self):
-        for mainComment in self.rawScript:
-            line = False
+        line = False
+        for _ in self.rawScript:
             self.scriptMap.append(line)
 
 
@@ -108,7 +108,7 @@ class ScriptWrapper():
         return len([commentThread for commentThread in self.scriptMap if commentThread[0] is True])
 
     def getEditedCommentAmount(self):
-        commentThreads = ([commentThread for commentThread in self.scriptMap])
+        commentThreads = list(self.scriptMap)
         count = 0
         for commentThread in commentThreads:
             for comment in commentThread:
@@ -117,7 +117,7 @@ class ScriptWrapper():
         return count
 
     def getEditedWordCount(self):
-        commentThreads = ([commentThread for commentThread in self.scriptMap])
+        commentThreads = list(self.scriptMap)
         word_count = 0
         for x, commentThread in enumerate(commentThreads):
             for y, comment in enumerate(commentThread):
@@ -126,7 +126,7 @@ class ScriptWrapper():
         return word_count
 
     def getEditedCharacterCount(self):
-        commentThreads = ([commentThread for commentThread in self.scriptMap])
+        commentThreads = list(self.scriptMap)
         word_count = 0
         for x, commentThread in enumerate(commentThreads):
             for y, comment in enumerate(commentThread):
@@ -140,11 +140,7 @@ class ScriptWrapper():
 
 
     def getKeptClips(self):
-        final_script = []
-        for i, clip in enumerate(self.scriptMap):
-            if clip:
-                final_script.append(self.rawScript[i])
-        return final_script
+        return [self.rawScript[i] for i, clip in enumerate(self.scriptMap) if clip]
 
 
     def getFinalClips(self):
@@ -157,9 +153,9 @@ class ScriptWrapper():
 
 
     def getEstimatedVideoTime(self):
-        time = 0
-        for i, comment in enumerate(self.scriptMap):
-            if comment is True:
-                time += round(self.rawScript[i].vid_duration, 1)
-        obj = datetime.timedelta(seconds=math.ceil(time))
-        return  obj
+        time = sum(
+            round(self.rawScript[i].vid_duration, 1)
+            for i, comment in enumerate(self.scriptMap)
+            if comment is True
+        )
+        return datetime.timedelta(seconds=math.ceil(time))

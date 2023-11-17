@@ -29,7 +29,9 @@ render_message = None
 
 
 settings.generateConfigFile()
-vidgenhttpaddress = "%s:%s" % (settings.videoGeneratorAddress, settings.videoGeneratorHTTPPort)
+vidgenhttpaddress = (
+    f"{settings.videoGeneratorAddress}:{settings.videoGeneratorHTTPPort}"
+)
 
 
 # The directory the FTP user will have full read/write access to.
@@ -38,10 +40,7 @@ FTP_DIRECTORY = current_path
 
 def getGames():
     filters = database.getAllSavedFilters()
-    formatted = []
-    for filter in filters:
-        formatted.append(filter[0])
-    return formatted
+    return [filter[0] for filter in filters]
 
 
 def getClips(filter, amount):
@@ -88,8 +87,7 @@ def uploadVideo(message):
 
 
 def getFileNames(file_path):
-    files = [os.path.splitext(filename)[0] for filename in os.listdir(file_path)]
-    return files
+    return [os.path.splitext(filename)[0] for filename in os.listdir(file_path)]
 
 def sendVideoContentToVidGenerator(file):
     try:
@@ -98,13 +96,13 @@ def sendVideoContentToVidGenerator(file):
         ftp.login(settings.videoGeneratorFTPUser, settings.videoGeneratorFTPPassword)
         ftp.cwd('Temp')
         folder_name = file.replace(".json", "")
-        print("Sending %s to video generator" % folder_name)
+        print(f"Sending {folder_name} to video generator")
         saveName = file
         try:
             ftp.mkd(folder_name)
         except ftplib.error_perm as e:
             print(e)
-        ftp.cwd('/Temp/%s/' % folder_name)
+        ftp.cwd(f'/Temp/{folder_name}/')
         jsonFile = None
         jsonFileCopy = None
         with open(f'{settings.video_data_path}/{file}.json') as json_file:
@@ -116,14 +114,13 @@ def sendVideoContentToVidGenerator(file):
             if clip["keep"]:
                 mp4 = clip["mp4"]
                 if ".mp4" not in mp4:
-                    mp4 = "%s/%s.mp4"%(settings.vid_filepath, mp4)
-                file = open(mp4,'rb')
-                name = len(mp4.split("/"))
-                mp4name = mp4.split("/")[name-1]
+                    mp4 = f"{settings.vid_filepath}/{mp4}.mp4"
+                with open(mp4,'rb') as file:
+                    name = len(mp4.split("/"))
+                    mp4name = mp4.split("/")[name-1]
 
-                ftp.storbinary('STOR %s' % mp4name, file, blocksize=262144)
-                file.close()
-                clip["mp4"] = '/Temp/%s/%s' % (folder_name, mp4name)
+                    ftp.storbinary(f'STOR {mp4name}', file, blocksize=262144)
+                clip["mp4"] = f'/Temp/{folder_name}/{mp4name}'
 
                 kept_clips.append(clip)
 
@@ -131,25 +128,25 @@ def sendVideoContentToVidGenerator(file):
         jsonFile["vid_folder"] = folder_name
         r = requests.get(f'http://{vidgenhttpaddress}/sendscript', json=jsonFile,  headers={'Accept-Encoding': None})
         sucess = r.json()["received"]
-        os.remove(settings.video_data_path + "/" + str(saveName) + ".json")
-        print("Done sending %s" % folder_name)
+        os.remove(f"{settings.video_data_path}/{str(saveName)}.json")
+        print(f"Done sending {folder_name}")
 
         for clip in jsonFileCopy["clips"]:
             mp4 = clip["mp4"]
             try:
                 if "UploadedFiles" in mp4:
-                    print("Deleting %s" % mp4)
+                    print(f"Deleting {mp4}")
                     os.remove(mp4)
                 else:
-                    print("deleting %s/%s.mp4" % (settings.vid_filepath, mp4))
-                    os.remove("%s/%s.mp4" % (settings.vid_filepath, mp4))
+                    print(f"deleting {settings.vid_filepath}/{mp4}.mp4")
+                    os.remove(f"{settings.vid_filepath}/{mp4}.mp4")
             except Exception as e:
-                print("could not delete mp4 %s" % mp4)
+                print(f"could not delete mp4 {mp4}")
 
 
-            #print(clip["mp4"])
-            #print(clip["keep"])
-        #print(ftp.nlst())
+                    #print(clip["mp4"])
+                    #print(clip["keep"])
+            #print(ftp.nlst())
     except ConnectionRefusedError:
         print("Video Generator is offline")
 
@@ -215,17 +212,17 @@ class HTTPHandler(http.server.BaseHTTPRequestHandler):
     def do_GET(self):
         self._set_headers()
         try:
-            if "/getgames" == self.path:
+            if self.path == "/getgames":
                 games = getGames()
                 self.wfile.write(json.dumps({'games': games}).encode())
-            elif "/getclips" == self.path:
+            elif self.path == "/getclips":
                 length = int(self.headers.get('content-length'))
                 message = json.loads(self.rfile.read(length))
                 game = message["game"]
                 amount = message["amount"]
                 clips = getClips(game, amount)
                 self.wfile.write(json.dumps({'clips': clips}).encode())
-            elif "/getclipswithoutids" == self.path:
+            elif self.path == "/getclipswithoutids":
                 length = int(self.headers.get('content-length'))
                 message = json.loads(self.rfile.read(length))
                 game = message["game"]
@@ -233,15 +230,15 @@ class HTTPHandler(http.server.BaseHTTPRequestHandler):
                 ids = message["ids"]
                 clips = getClipsWithoutIds(game, amount, ids)
                 self.wfile.write(json.dumps({'clips': clips}).encode())
-            elif "/uploadvideo" == self.path:
+            elif self.path == "/uploadvideo":
                 length = int(self.headers.get('content-length'))
                 message = json.loads(self.rfile.read(length))
                 success = uploadVideo(message)
                 self.wfile.write(json.dumps({'upload_success': success}).encode())
-            elif "/getfinishedvideoslist" == self.path:
+            elif self.path == "/getfinishedvideoslist":
                 finishedvideos = getFinishedVideosList()
                 self.wfile.write(json.dumps({'videos': finishedvideos}).encode())
-            elif "/getrenderinfo" == self.path:
+            elif self.path == "/getrenderinfo":
 
 
                 render_data = {'max_progress': max_progress,
@@ -285,7 +282,7 @@ def createDefaultUserTable():
     return [(settings.videoGeneratorFTPUser, settings.videoGeneratorFTPPassword)]
 
 def saveUsersTable():
-    print(f'Saving users table')
+    print('Saving users table')
     with open(f"{current_path}/usertable.save", 'wb') as pickle_file:
         pickle.dump(usersList, pickle_file)
 

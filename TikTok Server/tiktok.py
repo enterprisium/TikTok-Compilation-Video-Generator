@@ -107,7 +107,7 @@ def getAllClips(filter, amount, window):
 
             return newIds
         except Exception:
-            print("error occurred parsing: %s" % results)
+            print(f"error occurred parsing: {results}")
             return None
 
     searchAmount = amount
@@ -122,7 +122,7 @@ def getAllClips(filter, amount, window):
                 hashtags = filterObject.inputText
                 count = int(searchAmount / len(hashtags))
                 for hashtag in hashtags:
-                    print("Looking for %s clips for hashtag %s" % (count, hashtag))
+                    print(f"Looking for {count} clips for hashtag {hashtag}")
                     results = api.getVideosByHashTag(hashtag, count)
 
                     new = attemptAddScripts(results, "Trending")
@@ -136,7 +136,7 @@ def getAllClips(filter, amount, window):
 
 
                 for author in authors:
-                    print("Looking for %s clips for author %s" % (count, author))
+                    print(f"Looking for {count} clips for author {author}")
                     results = api.getVideosByUserName(author, count)
 
                     new = attemptAddScripts(results, "Trending")
@@ -144,7 +144,7 @@ def getAllClips(filter, amount, window):
                         break
                     new_ids.append(new)
             elif filterObject.searchType == "Trending":
-                print("Looking for %s trending clips" % searchAmount)
+                print(f"Looking for {searchAmount} trending clips")
 
                 results = api.getTrending(searchAmount)
 
@@ -197,7 +197,7 @@ def autoDownloadClips(filterName, clips, window):
     #window.update_log_start_downloading_game.emit(filterName, len(clips))
     print('Downloading...')
     for i, clip in enumerate(clips):
-        print("Downloading Clip %s/%s" % (i + 1, len(clips)))
+        print(f"Downloading Clip {i + 1}/{len(clips)}")
         try:
             api.downloadVideoById(clip.id, f"{settings.vid_filepath}/{clip.author_name}-{clip.id}.mp4")
 

@@ -43,8 +43,7 @@ sys.excepthook = exception_hook
 
 
 def getFileNames(file_path):
-    files = [os.path.splitext(filename)[0] for filename in os.listdir(file_path)]
-    return files
+    return [os.path.splitext(filename)[0] for filename in os.listdir(file_path)]
 
 
 if __name__ == "__main__":
